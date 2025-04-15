@@ -59,7 +59,49 @@ def load_data(filename):
     labels should be the corresponding list of labels, where each label
     is 1 if Revenue is true, and 0 otherwise.
     """
-    raise NotImplementedError
+    evidence = []
+    labels = []
+    
+    # Dictionary to convert month abbreviations to numeric values
+    months = {
+        'Jan': 0, 'Feb': 1, 'Mar': 2, 'Apr': 3, 'May': 4, 'June': 5,
+        'Jul': 6, 'Aug': 7, 'Sep': 8, 'Oct': 9, 'Nov': 10, 'Dec': 11
+    }
+    
+    # Open and read the CSV file
+    with open(filename) as f:
+        reader = csv.reader(f)
+        next(reader)  # Skip the header row
+        
+        for row in reader:
+            # Process evidence features with appropriate type conversions
+            evidence_row = [
+                int(row[0]),                  # Administrative
+                float(row[1]),                # Administrative_Duration
+                int(row[2]),                  # Informational
+                float(row[3]),                # Informational_Duration
+                int(row[4]),                  # ProductRelated
+                float(row[5]),                # ProductRelated_Duration
+                float(row[6]),                # BounceRates
+                float(row[7]),                # ExitRates
+                float(row[8]),                # PageValues
+                float(row[9]),                # SpecialDay
+                months[row[10]],              # Month
+                int(row[11]),                 # OperatingSystems
+                int(row[12]),                 # Browser
+                int(row[13]),                 # Region
+                int(row[14]),                 # TrafficType
+                1 if row[15] == "Returning_Visitor" else 0,  # VisitorType
+                1 if row[16] == "TRUE" else 0  # Weekend
+            ]
+            
+            # Process label (Revenue)
+            label = 1 if row[17] == "TRUE" else 0
+            
+            evidence.append(evidence_row)
+            labels.append(label)
+    
+    return (evidence, labels)
 
 
 def train_model(evidence, labels):
@@ -67,7 +109,13 @@ def train_model(evidence, labels):
     Given a list of evidence lists and a list of labels, return a
     fitted k-nearest neighbor model (k=1) trained on the data.
     """
-    raise NotImplementedError
+    # Create a k-nearest neighbor classifier with k=1
+    model = KNeighborsClassifier(n_neighbors=1)
+    
+    # Train the model on the evidence and labels
+    model.fit(evidence, labels)
+    
+    return model
 
 
 def evaluate(labels, predictions):
@@ -85,7 +133,33 @@ def evaluate(labels, predictions):
     representing the "true negative rate": the proportion of
     actual negative labels that were accurately identified.
     """
-    raise NotImplementedError
+    # Count positive and negative examples
+    true_positives = 0
+    false_negatives = 0
+    true_negatives = 0
+    false_positives = 0
+    
+    for actual, predicted in zip(labels, predictions):
+        # Positive label (purchase was made)
+        if actual == 1:
+            if predicted == 1:
+                true_positives += 1
+            else:
+                false_negatives += 1
+        # Negative label (purchase was not made)
+        else:
+            if predicted == 0:
+                true_negatives += 1
+            else:
+                false_positives += 1
+    
+    # Calculate sensitivity (true positive rate)
+    sensitivity = true_positives / (true_positives + false_negatives)
+    
+    # Calculate specificity (true negative rate)
+    specificity = true_negatives / (true_negatives + false_positives)
+    
+    return (sensitivity, specificity)
 
 
 if __name__ == "__main__":
